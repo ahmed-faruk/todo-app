@@ -23,6 +23,20 @@ class DriftTodoRepository implements TodoRepository {
   }
 
   @override
+  Future<void> toggle(int id) async {
+    // Read current value then flip — Drift doesn't support column-expression updates
+    // without a custom statement, so we fetch + write in a transaction.
+    await _db.transaction(() async {
+      final row = await (_db.select(_db.todoItems)
+            ..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
+      if (row == null) return;
+      await (_db.update(_db.todoItems)..where((t) => t.id.equals(id)))
+          .write(TodoItemsCompanion(isCompleted: Value(!row.isCompleted)));
+    });
+  }
+
+  @override
   Future<void> delete(int id) async {
     await (_db.delete(_db.todoItems)..where((t) => t.id.equals(id))).go();
   }

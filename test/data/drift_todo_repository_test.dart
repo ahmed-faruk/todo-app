@@ -52,5 +52,31 @@ void main() {
       final todos = await repo.watchAll().first;
       expect(todos, hasLength(1));
     });
+
+    test('toggle marks an incomplete todo as completed', () async {
+      await repo.create('Buy milk');
+      final before = await repo.watchAll().first;
+      expect(before.first.isCompleted, isFalse);
+
+      await repo.toggle(before.first.id);
+      final after = await repo.watchAll().first;
+      expect(after.first.isCompleted, isTrue);
+    });
+
+    test('toggle marks a completed todo back to incomplete', () async {
+      await repo.create('Buy milk');
+      final id = (await repo.watchAll().first).first.id;
+      await repo.toggle(id);
+      await repo.toggle(id);
+      final after = await repo.watchAll().first;
+      expect(after.first.isCompleted, isFalse);
+    });
+
+    test('toggle non-existent id is a no-op', () async {
+      await repo.create('Safe');
+      await repo.toggle(9999);
+      final todos = await repo.watchAll().first;
+      expect(todos.first.isCompleted, isFalse);
+    });
   });
 }

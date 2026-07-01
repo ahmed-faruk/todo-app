@@ -70,7 +70,20 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   itemBuilder: (context, index) {
                     final todo = todos[index];
                     return ListTile(
-                      title: Text(todo.title),
+                      leading: Checkbox(
+                        value: todo.isCompleted,
+                        onChanged: (_) => ref
+                            .read(todoNotifierProvider)
+                            .toggle(todo.id),
+                      ),
+                      title: Text(
+                        todo.title,
+                        style: todo.isCompleted
+                            ? const TextStyle(
+                                decoration: TextDecoration.lineThrough,
+                              )
+                            : null,
+                      ),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline),
                         onPressed: () =>
