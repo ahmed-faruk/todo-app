@@ -4,11 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'presentation/todo_screen.dart';
 
 void main() {
-  runApp(
-    const ProviderScope(
-      child: TodoApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: TodoApp()));
 }
 
 class TodoApp extends StatelessWidget {

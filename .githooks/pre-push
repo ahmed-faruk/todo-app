@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Pre-push gate — mirrors the three steps in .github/workflows/flutter-ci.yml
+# so formatting/analyze/test drift is caught locally before it turns CI red.
+#
+# Enable once per clone:  git config core.hooksPath .githooks
+set -euo pipefail
+
+echo "▸ pre-push: dart format check"
+dart format --output=none --set-exit-if-changed lib/ test/
+
+echo "▸ pre-push: flutter analyze"
+flutter analyze
+
+echo "▸ pre-push: flutter test"
+flutter test
+
+echo "✓ pre-push checks passed"

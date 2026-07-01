@@ -52,10 +52,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: _submit,
-                  child: const Text('Add'),
-                ),
+                FilledButton(onPressed: _submit, child: const Text('Add')),
               ],
             ),
           ),
@@ -63,14 +60,8 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: SegmentedButton<TodoFilter>(
               segments: const [
-                ButtonSegment(
-                  value: TodoFilter.all,
-                  label: Text('All'),
-                ),
-                ButtonSegment(
-                  value: TodoFilter.active,
-                  label: Text('Active'),
-                ),
+                ButtonSegment(value: TodoFilter.all, label: Text('All')),
+                ButtonSegment(value: TodoFilter.active, label: Text('Active')),
                 ButtonSegment(
                   value: TodoFilter.completed,
                   label: Text('Completed'),
@@ -143,9 +134,9 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
   }
 
   void _startEditing() => setState(() {
-        _editController.text = widget.todo.title;
-        _editing = true;
-      });
+    _editController.text = widget.todo.title;
+    _editing = true;
+  });
 
   void _discard() => setState(() => _editing = false);
 
@@ -162,8 +153,7 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
     return ListTile(
       leading: Checkbox(
         value: widget.todo.isCompleted,
-        onChanged: (_) =>
-            ref.read(todoNotifierProvider).toggle(widget.todo.id),
+        onChanged: (_) => ref.read(todoNotifierProvider).toggle(widget.todo.id),
       ),
       title: _editing
           ? TextField(
@@ -190,14 +180,8 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
           ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.check),
-                  onPressed: _save,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: _discard,
-                ),
+                IconButton(icon: const Icon(Icons.check), onPressed: _save),
+                IconButton(icon: const Icon(Icons.close), onPressed: _discard),
               ],
             )
           : IconButton(
