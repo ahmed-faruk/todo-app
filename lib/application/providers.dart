@@ -5,6 +5,8 @@ import '../data/drift_todo_repository.dart';
 import '../domain/todo.dart';
 import '../domain/todo_repository.dart';
 
+enum TodoFilter { all, active, completed }
+
 // Non-autoDispose Provider: lives for the entire ProviderScope lifetime.
 // onDispose closes the SQLite connection when the scope (app) is destroyed.
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
@@ -20,6 +22,18 @@ final todoRepositoryProvider = Provider<TodoRepository>(
 final todoListProvider = StreamProvider<List<Todo>>(
   (ref) => ref.watch(todoRepositoryProvider).watchAll(),
 );
+
+final filterProvider = StateProvider<TodoFilter>((_) => TodoFilter.all);
+
+final filteredTodoListProvider = Provider<AsyncValue<List<Todo>>>((ref) {
+  final all = ref.watch(todoListProvider);
+  final filter = ref.watch(filterProvider);
+  return all.whenData((todos) => switch (filter) {
+        TodoFilter.all => todos,
+        TodoFilter.active => todos.where((t) => !t.isCompleted).toList(),
+        TodoFilter.completed => todos.where((t) => t.isCompleted).toList(),
+      });
+});
 
 final todoNotifierProvider =
     Provider<_TodoNotifier>((ref) => _TodoNotifier(ref.watch(todoRepositoryProvider)));

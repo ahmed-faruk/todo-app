@@ -29,7 +29,8 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final todoList = ref.watch(todoListProvider);
+    final filter = ref.watch(filterProvider);
+    final filteredList = ref.watch(filteredTodoListProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('ToDo')),
@@ -58,13 +59,41 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: SegmentedButton<TodoFilter>(
+              segments: const [
+                ButtonSegment(
+                  value: TodoFilter.all,
+                  label: Text('All'),
+                ),
+                ButtonSegment(
+                  value: TodoFilter.active,
+                  label: Text('Active'),
+                ),
+                ButtonSegment(
+                  value: TodoFilter.completed,
+                  label: Text('Completed'),
+                ),
+              ],
+              selected: {filter},
+              onSelectionChanged: (selected) =>
+                  ref.read(filterProvider.notifier).state = selected.first,
+            ),
+          ),
+          const SizedBox(height: 8),
           Expanded(
-            child: todoList.when(
+            child: filteredList.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error: $e')),
               data: (todos) {
                 if (todos.isEmpty) {
-                  return const Center(child: Text('No todos yet.'));
+                  final message = switch (filter) {
+                    TodoFilter.active => 'No active todos.',
+                    TodoFilter.completed => 'No completed todos.',
+                    TodoFilter.all => 'No todos yet.',
+                  };
+                  return Center(child: Text(message));
                 }
                 return ListView.builder(
                   itemCount: todos.length,
@@ -102,7 +131,6 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
   @override
   void didUpdateWidget(_TodoTile old) {
     super.didUpdateWidget(old);
-    // Keep controller in sync if the title changes from outside (e.g. undo)
     if (!_editing && old.todo.title != widget.todo.title) {
       _editController.text = widget.todo.title;
     }
@@ -125,7 +153,6 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
     final newTitle = _editController.text.trim();
     setState(() => _editing = false);
     if (newTitle.isEmpty || newTitle == widget.todo.title) return;
-    // Capture ref before the async gap; guard against disposal after await.
     final notifier = ref.read(todoNotifierProvider);
     await notifier.rename(widget.todo.id, newTitle);
   }
