@@ -19,11 +19,11 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final title = _controller.text.trim();
     if (title.isEmpty) return;
-    ref.read(todoNotifierProvider).add(title);
     _controller.clear();
+    await ref.read(todoNotifierProvider).add(title);
   }
 
   @override

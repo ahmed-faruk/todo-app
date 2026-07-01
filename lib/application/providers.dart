@@ -5,10 +5,13 @@ import '../data/drift_todo_repository.dart';
 import '../domain/todo.dart';
 import '../domain/todo_repository.dart';
 
-final appDatabaseProvider = Provider<AppDatabase>(
-  (_) => AppDatabase(),
-  // Keep the DB alive for the lifetime of the app
-);
+// Non-autoDispose Provider: lives for the entire ProviderScope lifetime.
+// onDispose closes the SQLite connection when the scope (app) is destroyed.
+final appDatabaseProvider = Provider<AppDatabase>((ref) {
+  final db = AppDatabase();
+  ref.onDispose(db.close);
+  return db;
+});
 
 final todoRepositoryProvider = Provider<TodoRepository>(
   (ref) => DriftTodoRepository(ref.watch(appDatabaseProvider)),
