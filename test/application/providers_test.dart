@@ -36,6 +36,22 @@ void main() {
       expect(result.first.title, 'Test item');
     });
 
+    test('reflects toggle via todoNotifierProvider', () async {
+      final container = _makeContainer();
+      addTearDown(container.dispose);
+
+      await container.read(todoNotifierProvider).add('Toggleable');
+      final before = await container.read(todoListProvider.future);
+      expect(before.first.isCompleted, isFalse);
+
+      await container.read(todoNotifierProvider).toggle(before.first.id);
+      final after = await container
+          .read(todoRepositoryProvider)
+          .watchAll()
+          .firstWhere((list) => list.isNotEmpty && list.first.isCompleted);
+      expect(after.first.isCompleted, isTrue);
+    });
+
     test('reflects deletion via todoNotifierProvider', () async {
       final container = _makeContainer();
       addTearDown(container.dispose);

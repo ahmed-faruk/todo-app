@@ -29,5 +29,6 @@ class _TodoNotifier {
   final TodoRepository _repo;
 
   Future<void> add(String title) => _repo.create(title);
+  Future<void> toggle(int id) => _repo.toggle(id);
   Future<void> delete(int id) => _repo.delete(id);
 }
