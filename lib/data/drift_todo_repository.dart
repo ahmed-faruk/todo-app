@@ -37,6 +37,14 @@ class DriftTodoRepository implements TodoRepository {
   }
 
   @override
+  Future<void> rename(int id, String newTitle) async {
+    final trimmed = newTitle.trim();
+    if (trimmed.isEmpty) return;
+    await (_db.update(_db.todoItems)..where((t) => t.id.equals(id)))
+        .write(TodoItemsCompanion(title: Value(trimmed)));
+  }
+
+  @override
   Future<void> delete(int id) async {
     await (_db.delete(_db.todoItems)..where((t) => t.id.equals(id))).go();
   }

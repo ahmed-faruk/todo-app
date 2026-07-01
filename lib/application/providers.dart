@@ -30,5 +30,6 @@ class _TodoNotifier {
 
   Future<void> add(String title) => _repo.create(title);
   Future<void> toggle(int id) => _repo.toggle(id);
+  Future<void> rename(int id, String newTitle) => _repo.rename(id, newTitle);
   Future<void> delete(int id) => _repo.delete(id);
 }
