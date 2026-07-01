@@ -4,9 +4,7 @@ import 'package:todo_app/main.dart';
 
 void main() {
   testWidgets('TodoApp renders the ToDo title', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(child: TodoApp()),
-    );
+    await tester.pumpWidget(const ProviderScope(child: TodoApp()));
     expect(find.text('ToDo'), findsOneWidget);
   });
 }

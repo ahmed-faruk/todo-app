@@ -19,10 +19,10 @@ ProviderContainer _makeContainer() {
 
 // Helper: apply filter logic to a list (mirrors providers.dart filteredTodoListProvider)
 List<Todo> applyFilter(List<Todo> todos, TodoFilter filter) => switch (filter) {
-      TodoFilter.all => todos,
-      TodoFilter.active => todos.where((t) => !t.isCompleted).toList(),
-      TodoFilter.completed => todos.where((t) => t.isCompleted).toList(),
-    };
+  TodoFilter.all => todos,
+  TodoFilter.active => todos.where((t) => !t.isCompleted).toList(),
+  TodoFilter.completed => todos.where((t) => t.isCompleted).toList(),
+};
 
 void main() {
   group('TodoFilter enum + filter logic', () {
@@ -56,14 +56,24 @@ void main() {
 
     test('active filter on all-completed list returns empty', () {
       final todos = [
-        Todo(id: 1, title: 'Done', isCompleted: true, createdAt: DateTime(2024)),
+        Todo(
+          id: 1,
+          title: 'Done',
+          isCompleted: true,
+          createdAt: DateTime(2024),
+        ),
       ];
       expect(applyFilter(todos, TodoFilter.active), isEmpty);
     });
 
     test('completed filter on all-incomplete list returns empty', () {
       final todos = [
-        Todo(id: 1, title: 'Todo', isCompleted: false, createdAt: DateTime(2024)),
+        Todo(
+          id: 1,
+          title: 'Todo',
+          isCompleted: false,
+          createdAt: DateTime(2024),
+        ),
       ];
       expect(applyFilter(todos, TodoFilter.completed), isEmpty);
     });

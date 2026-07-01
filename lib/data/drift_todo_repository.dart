@@ -19,7 +19,9 @@ class DriftTodoRepository implements TodoRepository {
 
   @override
   Future<void> create(String title) async {
-    await _db.into(_db.todoItems).insert(TodoItemsCompanion.insert(title: title));
+    await _db
+        .into(_db.todoItems)
+        .insert(TodoItemsCompanion.insert(title: title));
   }
 
   @override
@@ -27,12 +29,13 @@ class DriftTodoRepository implements TodoRepository {
     // Read current value then flip — Drift doesn't support column-expression updates
     // without a custom statement, so we fetch + write in a transaction.
     await _db.transaction(() async {
-      final row = await (_db.select(_db.todoItems)
-            ..where((t) => t.id.equals(id)))
-          .getSingleOrNull();
+      final row = await (_db.select(
+        _db.todoItems,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
       if (row == null) return;
-      await (_db.update(_db.todoItems)..where((t) => t.id.equals(id)))
-          .write(TodoItemsCompanion(isCompleted: Value(!row.isCompleted)));
+      await (_db.update(_db.todoItems)..where((t) => t.id.equals(id))).write(
+        TodoItemsCompanion(isCompleted: Value(!row.isCompleted)),
+      );
     });
   }
 
@@ -40,8 +43,9 @@ class DriftTodoRepository implements TodoRepository {
   Future<void> rename(int id, String newTitle) async {
     final trimmed = newTitle.trim();
     if (trimmed.isEmpty) return;
-    await (_db.update(_db.todoItems)..where((t) => t.id.equals(id)))
-        .write(TodoItemsCompanion(title: Value(trimmed)));
+    await (_db.update(_db.todoItems)..where((t) => t.id.equals(id))).write(
+      TodoItemsCompanion(title: Value(trimmed)),
+    );
   }
 
   @override
@@ -50,9 +54,9 @@ class DriftTodoRepository implements TodoRepository {
   }
 
   Todo _toEntity(TodoItem row) => Todo(
-        id: row.id,
-        title: row.title,
-        isCompleted: row.isCompleted,
-        createdAt: row.createdAt,
-      );
+    id: row.id,
+    title: row.title,
+    isCompleted: row.isCompleted,
+    createdAt: row.createdAt,
+  );
 }

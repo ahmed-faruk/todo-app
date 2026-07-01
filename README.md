@@ -1,17 +1,34 @@
 # todo_app
 
-A new Flutter project.
+A cross-platform (iOS + Android) offline ToDo app built with Flutter, Riverpod,
+and Drift (SQLite). Governed by the ApexYard SDLC framework.
 
-## Getting Started
+## Architecture
 
-This project is a starting point for a Flutter application.
+Clean architecture layers under `lib/`:
 
-A few resources to get you started if this is your first Flutter project:
+- `domain/` — `Todo` entity + `TodoRepository` interface (pure Dart, no Flutter/DB imports)
+- `data/` — Drift database + `DriftTodoRepository` implementation
+- `application/` — Riverpod providers (todo list, filter, mutations)
+- `presentation/` — screens and widgets
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Architecture decisions: `docs/agdr/`.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Development
+
+```bash
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs   # regenerate Drift code
+flutter run
+```
+
+### Pre-push checks (required)
+
+CI (`.github/workflows/flutter-ci.yml`) enforces formatting, analysis, and tests.
+Enable the local pre-push hook once per clone so drift is caught before it turns CI red:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The hook runs `dart format --set-exit-if-changed`, `flutter analyze`, and `flutter test`.
