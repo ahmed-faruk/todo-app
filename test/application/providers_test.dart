@@ -52,6 +52,20 @@ void main() {
       expect(after.first.isCompleted, isTrue);
     });
 
+    test('reflects rename via todoNotifierProvider', () async {
+      final container = _makeContainer();
+      addTearDown(container.dispose);
+
+      await container.read(todoNotifierProvider).add('Before');
+      final id = (await container.read(todoListProvider.future)).first.id;
+      await container.read(todoNotifierProvider).rename(id, 'After');
+      final updated = await container
+          .read(todoRepositoryProvider)
+          .watchAll()
+          .firstWhere((list) => list.isNotEmpty && list.first.title == 'After');
+      expect(updated.first.title, 'After');
+    });
+
     test('reflects deletion via todoNotifierProvider', () async {
       final container = _makeContainer();
       addTearDown(container.dispose);

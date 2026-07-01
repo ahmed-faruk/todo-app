@@ -78,5 +78,36 @@ void main() {
       final todos = await repo.watchAll().first;
       expect(todos.first.isCompleted, isFalse);
     });
+
+    test('rename updates the title', () async {
+      await repo.create('Old title');
+      final id = (await repo.watchAll().first).first.id;
+      await repo.rename(id, 'New title');
+      final todos = await repo.watchAll().first;
+      expect(todos.first.title, 'New title');
+    });
+
+    test('rename with empty string is a no-op', () async {
+      await repo.create('Stays');
+      final id = (await repo.watchAll().first).first.id;
+      await repo.rename(id, '   ');
+      final todos = await repo.watchAll().first;
+      expect(todos.first.title, 'Stays');
+    });
+
+    test('rename trims whitespace', () async {
+      await repo.create('Original');
+      final id = (await repo.watchAll().first).first.id;
+      await repo.rename(id, '  Trimmed  ');
+      final todos = await repo.watchAll().first;
+      expect(todos.first.title, 'Trimmed');
+    });
+
+    test('rename non-existent id is a no-op', () async {
+      await repo.create('Untouched');
+      await repo.rename(9999, 'Ghost');
+      final todos = await repo.watchAll().first;
+      expect(todos.first.title, 'Untouched');
+    });
   });
 }
