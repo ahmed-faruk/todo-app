@@ -125,7 +125,9 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
     final newTitle = _editController.text.trim();
     setState(() => _editing = false);
     if (newTitle.isEmpty || newTitle == widget.todo.title) return;
-    await ref.read(todoNotifierProvider).rename(widget.todo.id, newTitle);
+    // Capture ref before the async gap; guard against disposal after await.
+    final notifier = ref.read(todoNotifierProvider);
+    await notifier.rename(widget.todo.id, newTitle);
   }
 
   @override
