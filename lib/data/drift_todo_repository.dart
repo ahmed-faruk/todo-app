@@ -12,16 +12,40 @@ class DriftTodoRepository implements TodoRepository {
   @override
   Stream<List<Todo>> watchAll() {
     return (_db.select(_db.todoItems)
-          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
         .watch()
         .map((rows) => rows.map(_toEntity).toList());
   }
 
   @override
   Future<void> create(String title) async {
-    await _db
-        .into(_db.todoItems)
-        .insert(TodoItemsCompanion.insert(title: title));
+    await _db.transaction(() async {
+      final minOrder =
+          await (_db.selectOnly(_db.todoItems)
+                ..addColumns([_db.todoItems.sortOrder.min()]))
+              .map((row) => row.read(_db.todoItems.sortOrder.min()))
+              .getSingleOrNull();
+      final nextOrder = (minOrder ?? 0) - 1;
+      await _db
+          .into(_db.todoItems)
+          .insert(
+            TodoItemsCompanion.insert(
+              title: title,
+              sortOrder: Value(nextOrder),
+            ),
+          );
+    });
+  }
+
+  @override
+  Future<void> reorder(List<int> orderedIds) async {
+    await _db.transaction(() async {
+      for (var i = 0; i < orderedIds.length; i++) {
+        await (_db.update(_db.todoItems)
+              ..where((t) => t.id.equals(orderedIds[i])))
+            .write(TodoItemsCompanion(sortOrder: Value(i)));
+      }
+    });
   }
 
   @override
@@ -58,5 +82,6 @@ class DriftTodoRepository implements TodoRepository {
     title: row.title,
     isCompleted: row.isCompleted,
     createdAt: row.createdAt,
+    sortOrder: row.sortOrder,
   );
 }

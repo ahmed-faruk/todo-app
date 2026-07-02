@@ -14,6 +14,7 @@ class TodoItems extends Table {
   TextColumn get title => text().withLength(min: 1, max: 500)();
   BoolColumn get isCompleted => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 }
 
 @DriftDatabase(tables: [TodoItems])
@@ -22,7 +23,28 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(todoItems, todoItems.sortOrder);
+        // Backfill sortOrder from the pre-migration display order
+        // (createdAt desc) so existing users see no reshuffle.
+        final rows = await (select(
+          todoItems,
+        )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
+        await transaction(() async {
+          for (var i = 0; i < rows.length; i++) {
+            await (update(todoItems)..where((t) => t.id.equals(rows[i].id)))
+                .write(TodoItemsCompanion(sortOrder: Value(i)));
+          }
+        });
+      }
+    },
+  );
 }
 
 LazyDatabase _openConnection() {

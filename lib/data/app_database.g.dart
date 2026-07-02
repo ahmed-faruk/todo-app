@@ -62,8 +62,26 @@ class $TodoItemsTable extends TodoItems
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, title, isCompleted, createdAt];
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    title,
+    isCompleted,
+    createdAt,
+    sortOrder,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -102,6 +120,12 @@ class $TodoItemsTable extends TodoItems
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
     return context;
   }
 
@@ -127,6 +151,10 @@ class $TodoItemsTable extends TodoItems
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
     );
   }
 
@@ -141,11 +169,13 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
   final String title;
   final bool isCompleted;
   final DateTime createdAt;
+  final int sortOrder;
   const TodoItem({
     required this.id,
     required this.title,
     required this.isCompleted,
     required this.createdAt,
+    required this.sortOrder,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -154,6 +184,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
     map['title'] = Variable<String>(title);
     map['is_completed'] = Variable<bool>(isCompleted);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['sort_order'] = Variable<int>(sortOrder);
     return map;
   }
 
@@ -163,6 +194,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
       title: Value(title),
       isCompleted: Value(isCompleted),
       createdAt: Value(createdAt),
+      sortOrder: Value(sortOrder),
     );
   }
 
@@ -176,6 +208,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
       title: serializer.fromJson<String>(json['title']),
       isCompleted: serializer.fromJson<bool>(json['isCompleted']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
     );
   }
   @override
@@ -186,6 +219,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
       'title': serializer.toJson<String>(title),
       'isCompleted': serializer.toJson<bool>(isCompleted),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'sortOrder': serializer.toJson<int>(sortOrder),
     };
   }
 
@@ -194,11 +228,13 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
     String? title,
     bool? isCompleted,
     DateTime? createdAt,
+    int? sortOrder,
   }) => TodoItem(
     id: id ?? this.id,
     title: title ?? this.title,
     isCompleted: isCompleted ?? this.isCompleted,
     createdAt: createdAt ?? this.createdAt,
+    sortOrder: sortOrder ?? this.sortOrder,
   );
   TodoItem copyWithCompanion(TodoItemsCompanion data) {
     return TodoItem(
@@ -208,6 +244,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
           ? data.isCompleted.value
           : this.isCompleted,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
     );
   }
 
@@ -217,13 +254,14 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('isCompleted: $isCompleted, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('sortOrder: $sortOrder')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, title, isCompleted, createdAt);
+  int get hashCode => Object.hash(id, title, isCompleted, createdAt, sortOrder);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -231,7 +269,8 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
           other.id == this.id &&
           other.title == this.title &&
           other.isCompleted == this.isCompleted &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.sortOrder == this.sortOrder);
 }
 
 class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
@@ -239,29 +278,34 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
   final Value<String> title;
   final Value<bool> isCompleted;
   final Value<DateTime> createdAt;
+  final Value<int> sortOrder;
   const TodoItemsCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
     this.isCompleted = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.sortOrder = const Value.absent(),
   });
   TodoItemsCompanion.insert({
     this.id = const Value.absent(),
     required String title,
     this.isCompleted = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.sortOrder = const Value.absent(),
   }) : title = Value(title);
   static Insertable<TodoItem> custom({
     Expression<int>? id,
     Expression<String>? title,
     Expression<bool>? isCompleted,
     Expression<DateTime>? createdAt,
+    Expression<int>? sortOrder,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (title != null) 'title': title,
       if (isCompleted != null) 'is_completed': isCompleted,
       if (createdAt != null) 'created_at': createdAt,
+      if (sortOrder != null) 'sort_order': sortOrder,
     });
   }
 
@@ -270,12 +314,14 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
     Value<String>? title,
     Value<bool>? isCompleted,
     Value<DateTime>? createdAt,
+    Value<int>? sortOrder,
   }) {
     return TodoItemsCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
       isCompleted: isCompleted ?? this.isCompleted,
       createdAt: createdAt ?? this.createdAt,
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 
@@ -294,6 +340,9 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
     return map;
   }
 
@@ -303,7 +352,8 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('isCompleted: $isCompleted, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('sortOrder: $sortOrder')
           ..write(')'))
         .toString();
   }
@@ -326,6 +376,7 @@ typedef $$TodoItemsTableCreateCompanionBuilder =
       required String title,
       Value<bool> isCompleted,
       Value<DateTime> createdAt,
+      Value<int> sortOrder,
     });
 typedef $$TodoItemsTableUpdateCompanionBuilder =
     TodoItemsCompanion Function({
@@ -333,6 +384,7 @@ typedef $$TodoItemsTableUpdateCompanionBuilder =
       Value<String> title,
       Value<bool> isCompleted,
       Value<DateTime> createdAt,
+      Value<int> sortOrder,
     });
 
 class $$TodoItemsTableFilterComposer
@@ -361,6 +413,11 @@ class $$TodoItemsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -393,6 +450,11 @@ class $$TodoItemsTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TodoItemsTableAnnotationComposer
@@ -417,6 +479,9 @@ class $$TodoItemsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
 }
 
 class $$TodoItemsTableTableManager
@@ -451,11 +516,13 @@ class $$TodoItemsTableTableManager
                 Value<String> title = const Value.absent(),
                 Value<bool> isCompleted = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
               }) => TodoItemsCompanion(
                 id: id,
                 title: title,
                 isCompleted: isCompleted,
                 createdAt: createdAt,
+                sortOrder: sortOrder,
               ),
           createCompanionCallback:
               ({
@@ -463,11 +530,13 @@ class $$TodoItemsTableTableManager
                 required String title,
                 Value<bool> isCompleted = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
               }) => TodoItemsCompanion.insert(
                 id: id,
                 title: title,
                 isCompleted: isCompleted,
                 createdAt: createdAt,
+                sortOrder: sortOrder,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

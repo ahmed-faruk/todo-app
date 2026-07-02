@@ -28,16 +28,40 @@ void main() {
   group('TodoFilter enum + filter logic', () {
     test('all filter passes every todo through', () {
       final todos = [
-        Todo(id: 1, title: 'A', isCompleted: false, createdAt: DateTime(2024)),
-        Todo(id: 2, title: 'B', isCompleted: true, createdAt: DateTime(2024)),
+        Todo(
+          id: 1,
+          title: 'A',
+          isCompleted: false,
+          createdAt: DateTime(2024),
+          sortOrder: 0,
+        ),
+        Todo(
+          id: 2,
+          title: 'B',
+          isCompleted: true,
+          createdAt: DateTime(2024),
+          sortOrder: 0,
+        ),
       ];
       expect(applyFilter(todos, TodoFilter.all), hasLength(2));
     });
 
     test('active filter keeps only incomplete todos', () {
       final todos = [
-        Todo(id: 1, title: 'A', isCompleted: false, createdAt: DateTime(2024)),
-        Todo(id: 2, title: 'B', isCompleted: true, createdAt: DateTime(2024)),
+        Todo(
+          id: 1,
+          title: 'A',
+          isCompleted: false,
+          createdAt: DateTime(2024),
+          sortOrder: 0,
+        ),
+        Todo(
+          id: 2,
+          title: 'B',
+          isCompleted: true,
+          createdAt: DateTime(2024),
+          sortOrder: 0,
+        ),
       ];
       final result = applyFilter(todos, TodoFilter.active);
       expect(result, hasLength(1));
@@ -46,8 +70,20 @@ void main() {
 
     test('completed filter keeps only completed todos', () {
       final todos = [
-        Todo(id: 1, title: 'A', isCompleted: false, createdAt: DateTime(2024)),
-        Todo(id: 2, title: 'B', isCompleted: true, createdAt: DateTime(2024)),
+        Todo(
+          id: 1,
+          title: 'A',
+          isCompleted: false,
+          createdAt: DateTime(2024),
+          sortOrder: 0,
+        ),
+        Todo(
+          id: 2,
+          title: 'B',
+          isCompleted: true,
+          createdAt: DateTime(2024),
+          sortOrder: 0,
+        ),
       ];
       final result = applyFilter(todos, TodoFilter.completed);
       expect(result, hasLength(1));
@@ -61,6 +97,7 @@ void main() {
           title: 'Done',
           isCompleted: true,
           createdAt: DateTime(2024),
+          sortOrder: 0,
         ),
       ];
       expect(applyFilter(todos, TodoFilter.active), isEmpty);
@@ -73,6 +110,7 @@ void main() {
           title: 'Todo',
           isCompleted: false,
           createdAt: DateTime(2024),
+          sortOrder: 0,
         ),
       ];
       expect(applyFilter(todos, TodoFilter.completed), isEmpty);
