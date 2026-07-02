@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/providers.dart';
 import '../domain/todo.dart';
+import '../theme/design_tokens.dart';
 
 class TodoScreen extends ConsumerStatefulWidget {
   const TodoScreen({super.key});
@@ -37,7 +38,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Row(
               children: [
                 Expanded(
@@ -51,13 +52,13 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 FilledButton(onPressed: _submit, child: const Text('Add')),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: SegmentedButton<TodoFilter>(
               segments: const [
                 ButtonSegment(value: TodoFilter.all, label: Text('All')),
@@ -72,19 +73,49 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   ref.read(filterProvider.notifier).state = selected.first,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Expanded(
             child: filteredList.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => Center(
+                child: Text(
+                  'Error: $e',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
               data: (todos) {
                 if (todos.isEmpty) {
-                  final message = switch (filter) {
-                    TodoFilter.active => 'No active todos.',
-                    TodoFilter.completed => 'No completed todos.',
-                    TodoFilter.all => 'No todos yet.',
+                  final (message, icon) = switch (filter) {
+                    TodoFilter.active => (
+                      'No active todos.',
+                      Icons.task_alt_outlined,
+                    ),
+                    TodoFilter.completed => (
+                      'No completed todos.',
+                      Icons.task_alt_outlined,
+                    ),
+                    TodoFilter.all => (
+                      'No todos yet.',
+                      Icons.checklist_outlined,
+                    ),
                   };
-                  return Center(child: Text(message));
+                  final onSurfaceVariant = Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant;
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icon, size: 48, color: onSurfaceVariant),
+                        const SizedBox(height: AppSpacing.xl),
+                        Text(
+                          message,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  );
                 }
                 if (filter != TodoFilter.all) {
                   return ListView.builder(
@@ -206,8 +237,11 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
               child: Text(
                 widget.todo.title,
                 style: widget.todo.isCompleted
-                    ? const TextStyle(decoration: TextDecoration.lineThrough)
-                    : null,
+                    ? Theme.of(context).textTheme.titleMedium?.copyWith(
+                        decoration: TextDecoration.lineThrough,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      )
+                    : Theme.of(context).textTheme.titleMedium,
               ),
             ),
       trailing: _editing
@@ -222,7 +256,10 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.delete_outline),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                   onPressed: () =>
                       ref.read(todoNotifierProvider).delete(widget.todo.id),
                 ),
