@@ -34,7 +34,11 @@ Future<void> _drain(WidgetTester tester) async {
   await tester.pump(const Duration(seconds: 1));
 }
 
+/// Opens the add-todo bottom sheet via the FAB, enters [title], and taps
+/// the sheet's Add button (which submits and closes the sheet).
 Future<void> _addTodo(WidgetTester tester, String title) async {
+  await tester.tap(find.byType(FloatingActionButton));
+  await tester.pumpAndSettle();
   await tester.enterText(find.byType(TextField).first, title);
   await tester.tap(find.widgetWithText(FilledButton, 'Add'));
   await tester.pumpAndSettle();
@@ -84,10 +88,10 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
-      expect(find.byType(TextField), findsNWidgets(2));
+      // Only the inline-edit field is present — the add-todo sheet closes
+      // itself after submitting, it isn't a permanently-visible bar anymore.
+      expect(find.byType(TextField), findsOneWidget);
 
-      // The inline-edit field is now first in tree order (list items are
-      // built before the bottom-anchored add-todo bar).
       await tester.enterText(find.byType(TextField).first, 'Renamed');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
@@ -107,8 +111,6 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
-      // The inline-edit field is now first in tree order (list items are
-      // built before the bottom-anchored add-todo bar).
       await tester.enterText(find.byType(TextField).first, 'ShouldNotStick');
       await tester.tap(find.byIcon(Icons.close));
       await tester.pumpAndSettle();

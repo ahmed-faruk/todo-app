@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/providers.dart';
 import '../domain/todo.dart';
+import '../theme/app_theme.dart';
 import '../theme/design_tokens.dart';
 
 class TodoScreen extends ConsumerStatefulWidget {
@@ -29,15 +30,111 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     await ref.read(todoNotifierProvider).add(title);
   }
 
+  Future<void> _openAddSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            top: AppSpacing.md,
+            bottom:
+                MediaQuery.of(sheetContext).viewInsets.bottom + AppSpacing.md,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  autofocus: true,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) async {
+                    await _submit();
+                    if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Add a todo…',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.md,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              FilledButton(
+                onPressed: () async {
+                  await _submit();
+                  if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+                },
+                child: const Text('Add'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final filter = ref.watch(filterProvider);
     final filteredList = ref.watch(filteredTodoListProvider);
+    final allTodos = ref.watch(todoListProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = Theme.of(context).brightness;
+
+    final activeCount = allTodos.maybeWhen(
+      data: (todos) => todos.where((t) => !t.isCompleted).length,
+      orElse: () => 0,
+    );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('ToDo')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openAddSheet,
+        child: const Icon(Icons.add),
+      ),
       body: Column(
         children: [
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: AppTheme.headerGradient(brightness),
+              ),
+            ),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              MediaQuery.of(context).padding.top + AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.xl,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ToDo',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: colorScheme.onPrimary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  activeCount == 1 ? '1 left' : '$activeCount left',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onPrimary.withValues(alpha: 0.85),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.md,
@@ -66,7 +163,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
               error: (e, _) => Center(
                 child: Text(
                   'Error: $e',
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  style: TextStyle(color: colorScheme.error),
                 ),
               ),
               data: (todos) {
@@ -85,19 +182,28 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                       Icons.checklist_outlined,
                     ),
                   };
-                  final onSurfaceVariant = Theme.of(
-                    context,
-                  ).colorScheme.onSurfaceVariant;
                   return Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(icon, size: 48, color: onSurfaceVariant),
+                        Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            icon,
+                            size: 36,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                        ),
                         const SizedBox(height: AppSpacing.xl),
                         Text(
                           message,
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: onSurfaceVariant),
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -105,7 +211,12 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                 }
                 if (filter != TodoFilter.all) {
                   return ListView.builder(
-                    padding: const EdgeInsets.only(top: AppSpacing.xs),
+                    padding: const EdgeInsets.fromLTRB(
+                      0,
+                      AppSpacing.xs,
+                      0,
+                      AppSpacing.xxl,
+                    ),
                     itemCount: todos.length,
                     itemBuilder: (context, index) {
                       return _TodoTile(
@@ -117,7 +228,12 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   );
                 }
                 return ReorderableListView.builder(
-                  padding: const EdgeInsets.only(top: AppSpacing.xs),
+                  padding: const EdgeInsets.fromLTRB(
+                    0,
+                    AppSpacing.xs,
+                    0,
+                    AppSpacing.xxl,
+                  ),
                   buildDefaultDragHandles: false,
                   itemCount: todos.length,
                   itemBuilder: (context, index) {
@@ -139,38 +255,6 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   },
                 );
               },
-            ),
-          ),
-          // Bottom-anchored add-todo bar — primary, most-frequent action kept
-          // within thumb reach, per the v2 design addendum
-          // (projects/todo-app/designs/ui-revamp-design-tokens.md).
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _submit(),
-                      decoration: InputDecoration(
-                        hintText: 'Add a todo…',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                          vertical: AppSpacing.md,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  FilledButton(onPressed: _submit, child: const Text('Add')),
-                ],
-              ),
             ),
           ),
         ],
@@ -249,6 +333,12 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    // Matches the FAB/segmented-button accent (raw seed, not
+    // colorScheme.primary) so the card accent bar reads as the same bold
+    // color, not a paler dark-mode-adjusted tone. See app_theme.dart.
+    final accentColor = widget.todo.isCompleted
+        ? Colors.green.shade400
+        : AppTheme.seedColor;
 
     final tile = ListTile(
       leading: AnimatedScale(
@@ -318,7 +408,15 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
         color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
-      child: tile,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(width: 4, color: accentColor),
+            Expanded(child: tile),
+          ],
+        ),
+      ),
     );
 
     return AnimatedOpacity(
