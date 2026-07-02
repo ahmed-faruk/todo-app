@@ -86,7 +86,9 @@ void main() {
 
       expect(find.byType(TextField), findsNWidgets(2));
 
-      await tester.enterText(find.byType(TextField).last, 'Renamed');
+      // The inline-edit field is now first in tree order (list items are
+      // built before the bottom-anchored add-todo bar).
+      await tester.enterText(find.byType(TextField).first, 'Renamed');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
@@ -105,7 +107,9 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
-      await tester.enterText(find.byType(TextField).last, 'ShouldNotStick');
+      // The inline-edit field is now first in tree order (list items are
+      // built before the bottom-anchored add-todo bar).
+      await tester.enterText(find.byType(TextField).first, 'ShouldNotStick');
       await tester.tap(find.byIcon(Icons.close));
       await tester.pumpAndSettle();
 
