@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/providers.dart';
@@ -38,27 +39,12 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _submit(),
-                    decoration: const InputDecoration(
-                      hintText: 'Add a todo…',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                FilledButton(onPressed: _submit, child: const Text('Add')),
-              ],
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              0,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: SegmentedButton<TodoFilter>(
               segments: const [
                 ButtonSegment(value: TodoFilter.all, label: Text('All')),
@@ -119,6 +105,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                 }
                 if (filter != TodoFilter.all) {
                   return ListView.builder(
+                    padding: const EdgeInsets.only(top: AppSpacing.xs),
                     itemCount: todos.length,
                     itemBuilder: (context, index) {
                       return _TodoTile(
@@ -130,6 +117,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   );
                 }
                 return ReorderableListView.builder(
+                  padding: const EdgeInsets.only(top: AppSpacing.xs),
                   buildDefaultDragHandles: false,
                   itemCount: todos.length,
                   itemBuilder: (context, index) {
@@ -151,6 +139,38 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   },
                 );
               },
+            ),
+          ),
+          // Bottom-anchored add-todo bar — primary, most-frequent action kept
+          // within thumb reach, per the v2 design addendum
+          // (projects/todo-app/designs/ui-revamp-design-tokens.md).
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _submit(),
+                      decoration: InputDecoration(
+                        hintText: 'Add a todo…',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.md,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  FilledButton(onPressed: _submit, child: const Text('Add')),
+                ],
+              ),
             ),
           ),
         ],
@@ -176,6 +196,7 @@ class _TodoTile extends ConsumerStatefulWidget {
 
 class _TodoTileState extends ConsumerState<_TodoTile> {
   bool _editing = false;
+  bool _removing = false;
   late final TextEditingController _editController;
 
   @override
@@ -213,12 +234,31 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
     await notifier.rename(widget.todo.id, newTitle);
   }
 
+  Future<void> _toggle() async {
+    HapticFeedback.lightImpact();
+    await ref.read(todoNotifierProvider).toggle(widget.todo.id);
+  }
+
+  Future<void> _delete() async {
+    setState(() => _removing = true);
+    await Future.delayed(const Duration(milliseconds: 150));
+    if (!mounted) return;
+    await ref.read(todoNotifierProvider).delete(widget.todo.id);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Checkbox(
-        value: widget.todo.isCompleted,
-        onChanged: (_) => ref.read(todoNotifierProvider).toggle(widget.todo.id),
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final tile = ListTile(
+      leading: AnimatedScale(
+        scale: widget.todo.isCompleted ? 1.1 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        child: Checkbox(
+          value: widget.todo.isCompleted,
+          onChanged: (_) => _toggle(),
+        ),
       ),
       title: _editing
           ? TextField(
@@ -239,7 +279,7 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
                 style: widget.todo.isCompleted
                     ? Theme.of(context).textTheme.titleMedium?.copyWith(
                         decoration: TextDecoration.lineThrough,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: colorScheme.onSurfaceVariant,
                       )
                     : Theme.of(context).textTheme.titleMedium,
               ),
@@ -256,12 +296,8 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: Icon(
-                    Icons.delete_outline,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  onPressed: () =>
-                      ref.read(todoNotifierProvider).delete(widget.todo.id),
+                  icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                  onPressed: _delete,
                 ),
                 if (widget.reorderable && widget.dragIndex != null)
                   ReorderableDragStartListener(
@@ -270,6 +306,51 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
                   ),
               ],
             ),
+    );
+
+    final card = Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      child: tile,
+    );
+
+    return AnimatedOpacity(
+      opacity: _removing ? 0 : (widget.todo.isCompleted ? 0.6 : 1.0),
+      duration: const Duration(milliseconds: 150),
+      child: _EntryAnimated(child: card),
+    );
+  }
+}
+
+/// Fades + slides a newly-created tile in once, on first build for a given
+/// key. Rebuilds of an already-mounted tile (same key) don't re-trigger the
+/// animation, since the underlying [TweenAnimationBuilder] only re-runs
+/// when its tween changes — which it never does here.
+class _EntryAnimated extends StatelessWidget {
+  const _EntryAnimated({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+      builder: (context, value, child) => Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(0, (1 - value) * 12),
+          child: child,
+        ),
+      ),
+      child: child,
     );
   }
 }

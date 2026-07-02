@@ -33,7 +33,7 @@ class AppTheme {
         style: ButtonStyle(
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
           ),
         ),
@@ -42,7 +42,7 @@ class AppTheme {
         style: ButtonStyle(
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
           ),
         ),
