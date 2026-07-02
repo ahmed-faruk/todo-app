@@ -6,4 +6,5 @@ abstract interface class TodoRepository {
   Future<void> toggle(int id);
   Future<void> rename(int id, String newTitle);
   Future<void> delete(int id);
+  Future<void> reorder(List<int> orderedIds);
 }

@@ -50,6 +50,9 @@ dev_dependencies:
   build_runner: ^2.4.15
   drift_dev: ^2.24.0
   riverpod_generator: ^2.6.1
+  # Used directly in test/data/drift_todo_repository_test.dart to seed a
+  # raw v1-shaped sqlite file for the migration test.
+  sqlite3: ^2.4.6
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

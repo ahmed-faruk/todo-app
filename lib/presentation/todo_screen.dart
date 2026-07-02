@@ -86,10 +86,37 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   };
                   return Center(child: Text(message));
                 }
-                return ListView.builder(
+                if (filter != TodoFilter.all) {
+                  return ListView.builder(
+                    itemCount: todos.length,
+                    itemBuilder: (context, index) {
+                      return _TodoTile(
+                        key: ValueKey(todos[index].id),
+                        todo: todos[index],
+                        reorderable: false,
+                      );
+                    },
+                  );
+                }
+                return ReorderableListView.builder(
+                  buildDefaultDragHandles: false,
                   itemCount: todos.length,
                   itemBuilder: (context, index) {
-                    return _TodoTile(todo: todos[index]);
+                    return _TodoTile(
+                      key: ValueKey(todos[index].id),
+                      todo: todos[index],
+                      reorderable: true,
+                      dragIndex: index,
+                    );
+                  },
+                  onReorder: (oldIndex, newIndex) {
+                    final adjustedNewIndex = newIndex > oldIndex
+                        ? newIndex - 1
+                        : newIndex;
+                    final ids = todos.map((t) => t.id).toList();
+                    final movedId = ids.removeAt(oldIndex);
+                    ids.insert(adjustedNewIndex, movedId);
+                    ref.read(todoNotifierProvider).reorder(ids);
                   },
                 );
               },
@@ -102,8 +129,15 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
 }
 
 class _TodoTile extends ConsumerStatefulWidget {
-  const _TodoTile({required this.todo});
+  const _TodoTile({
+    super.key,
+    required this.todo,
+    required this.reorderable,
+    this.dragIndex,
+  });
   final Todo todo;
+  final bool reorderable;
+  final int? dragIndex;
 
   @override
   ConsumerState<_TodoTile> createState() => _TodoTileState();
@@ -184,10 +218,20 @@ class _TodoTileState extends ConsumerState<_TodoTile> {
                 IconButton(icon: const Icon(Icons.close), onPressed: _discard),
               ],
             )
-          : IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () =>
-                  ref.read(todoNotifierProvider).delete(widget.todo.id),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () =>
+                      ref.read(todoNotifierProvider).delete(widget.todo.id),
+                ),
+                if (widget.reorderable && widget.dragIndex != null)
+                  ReorderableDragStartListener(
+                    index: widget.dragIndex!,
+                    child: const Icon(Icons.drag_handle),
+                  ),
+              ],
             ),
     );
   }
